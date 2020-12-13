@@ -1,0 +1,100 @@
+---
+title: "P8130 Final Project"
+author: "Xiangyi Liu (xl3048), Yueqi Zhong, Bin Yang, Pangsibo Shen"
+date: "12/13/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(plotly)
+library(arsenal)
+
+```
+
+
+```{r data, include=F}
+crime_df <- read.csv(file = "./HateCrimes.csv") %>% 
+  mutate(hate_crimes_per_100k_splc = as.numeric(hate_crimes_per_100k_splc))
+  
+```
+
+
+### Descriptive Statistics
+```{r desp, echo=F}
+my_controls <- tableby.control(
+  total = T,
+  test=F,  # No test p-values yet
+  numeric.stats = c("meansd", "medianq1q3", "range", "Nmiss2"),
+  cat.stats = c("countpct", "Nmiss2"),
+  stats.labels = list(
+    meansd = "Mean (SD)",
+    medianq1q3 = "Median (Q1, Q3)",
+    range = "Min - Max",
+    Nmiss2 = "Missing",
+    countpct = "N (%)"))
+
+my_labels <- list(state = "State", unemployment = "Unemployment", urbanization = "Urbanization", median_household_income = "Median Household Income", perc_population_with_high_school_degree = "High School Education %", perc_non_citizen = "Non Citizen %", gini_index = "Gini Index", perc_non_white = " Non White %", hate_crimes_per_100k_splc = "Hate Crime Rate per 100K")
+
+tbl<-tableby( ~ unemployment + urbanization + median_household_income + perc_population_with_high_school_degree + perc_non_citizen + gini_index + perc_non_white + hate_crimes_per_100k_splc,data = crime_df, control=my_controls,test=FALSE)
+summary(tbl,title = "Descriptive Statistics: Hate Crime Rate After 2016 Election",labelTranslations = my_labels,text=TRUE)
+
+
+# drop NAs
+crime_df <- drop_na(crime_df)
+```
+
+
+### Check for outliers
+```{r outlier, echo=F}
+outlier_plot <- ggplot(data = crime_df, aes(hate_crimes_per_100k_splc))+
+  geom_boxplot(outlier.color = "red",outlier.size = 2)+ylim(-0.5,0.5)+
+  labs(title = "Outliers Detection")
+outlier_plot
+
+upper_bound <- quantile(crime_df$hate_crimes_per_100k_splc, 0.75)
+lower_bound <- quantile(crime_df$hate_crimes_per_100k_splc, 0.25)
+iqr = upper_bound-lower_bound
+
+crime_df %>% filter(hate_crimes_per_100k_splc > upper_bound+1.5*iqr) %>% 
+  select(state,hate_crimes_per_100k_splc) %>%
+   knitr::kable(digits = 2)
+ 
+
+crime_df <- crime_df %>% filter(hate_crimes_per_100k_splc <= upper_bound+1.5*iqr)
+
+# Take log on the outcome
+crime_df <- crime_df %>% mutate(hate_crimes_per_100k_splc = log(hate_crimes_per_100k_splc))
+
+
+crime_df %>% 
+  ggplot(aes(x = hate_crimes_per_100k_splc)) +
+  geom_histogram(fill="#69b3a2", color="#e9ecef", alpha=0.9, aes(y = ..density..)) + 
+  geom_density(color = "yellow") +
+  labs(
+    title = "Histogram for hate crime per 100,000 population" ,
+    x = "hate crime per 100,000 population"
+  )
+
+# qqplot - distribution of outcome
+crime_df %>% 
+  ggplot(aes(sample = hate_crimes_per_100k_splc)) + 
+  stat_qq() + 
+  stat_qq_line() +
+  labs(
+    title = "QQplot for hate crime per 100,000 population"
+  )
+
+crime_df <- crime_df %>% filter(hate_crimes_per_100k_splc <= upper_bound+1.5*iqr)
+
+```
+
+
+### Verify the association between hate crime rate and income inequality
+
+
+
