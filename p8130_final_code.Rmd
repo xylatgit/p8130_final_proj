@@ -15,6 +15,7 @@ library(plotly)
 library(arsenal)
 library(HH)
 
+
 ```
 
 
@@ -62,7 +63,7 @@ lower_bound <- quantile(crime_df$hate_crimes_per_100k_splc, 0.25)
 iqr = upper_bound-lower_bound
 
 crime_df %>% filter(hate_crimes_per_100k_splc > upper_bound+1.5*iqr) %>% 
-  #select(state, hate_crimes_per_100k_splc) %>%
+  dplyr::select(state, hate_crimes_per_100k_splc) %>%
   knitr::kable(digits = 2)
  
 
@@ -123,9 +124,9 @@ anova(reduced_model, reg_crimes)
 
 ### MLR
 ```{r cor matrix}
-crime_df %>% select(-state,-unemployment,-urbanization) %>% cor() %>% knitr::kable(digits = 2)
+crime_df %>% dplyr::select(-state,-unemployment,-urbanization) %>% cor() %>% knitr::kable(digits = 2)
 
-crime_df %>% select(-state,-unemployment,-urbanization) %>% cor() %>% corrplot::corrplot(method = "circle", type = "upper", diag=FALSE)
+crime_df %>% dplyr::select(-state,-unemployment,-urbanization) %>% cor() %>% corrplot::corrplot(method = "circle", type = "upper", diag=FALSE)
 ```
 
 
