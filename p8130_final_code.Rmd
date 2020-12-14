@@ -14,6 +14,7 @@ library(dplyr)
 library(plotly)
 library(arsenal)
 library(HH)
+library(patchwork)
 
 
 ```
@@ -55,7 +56,7 @@ crime_df <- drop_na(crime_df)
 ```{r outlier, echo=F}
 outlier_plot <- ggplot(data = crime_df, aes(hate_crimes_per_100k_splc))+
   geom_boxplot(outlier.color = "red",outlier.size = 2)+ylim(-0.5,0.5)+
-  labs(title = "Outliers Detection")
+  labs(title = "Outliers Detection", x = "Hate Crime Rate per 100K People")
 outlier_plot
 
 upper_bound <- quantile(crime_df$hate_crimes_per_100k_splc, 0.75)
@@ -67,28 +68,48 @@ crime_df %>% filter(hate_crimes_per_100k_splc > upper_bound+1.5*iqr) %>%
   knitr::kable(digits = 2)
  
 
-
-# Take log on the outcome
-crime_df <- crime_df %>% mutate(hate_crimes_per_100k_splc = log(hate_crimes_per_100k_splc))
-
-
-crime_df %>% 
+hist_before <- crime_df %>% 
   ggplot(aes(x = hate_crimes_per_100k_splc)) +
   geom_histogram(fill="#69b3a2", color="#e9ecef", alpha=0.9, aes(y = ..density..)) + 
   geom_density(color = "yellow") +
   labs(
-    title = "Histogram for hate crime per 100,000 population" ,
+    title = "Before Log" ,
     x = "hate crime per 100,000 population"
   )
 
 # qqplot - distribution of outcome
-crime_df %>% 
+qq_before <- crime_df %>% 
   ggplot(aes(sample = hate_crimes_per_100k_splc)) + 
   stat_qq() + 
   stat_qq_line() +
   labs(
-    title = "QQplot for hate crime per 100,000 population"
+    title = "Before Log"
   )
+
+
+# Take log on the outcome
+crime_df <- crime_df %>% mutate(hate_crimes_per_100k_splc = log(hate_crimes_per_100k_splc))
+
+hist_after<- crime_df %>% 
+  ggplot(aes(x = hate_crimes_per_100k_splc)) +
+  geom_histogram(fill="#69b3a2", color="#e9ecef", alpha=0.9, aes(y = ..density..)) + 
+  geom_density(color = "yellow") +
+  labs(
+    title = "After Log" ,
+    x = "hate crime per 100,000 population"
+  )
+
+qq_after <- crime_df %>% 
+  ggplot(aes(sample = hate_crimes_per_100k_splc)) + 
+  stat_qq() + 
+  stat_qq_line() +
+  labs(
+    title = "After Log"
+  )
+
+hist_before+qq_before
+hist_after+qq_after
+
 
 # crime_df <- crime_df %>% filter(hate_crimes_per_100k_splc <= upper_bound+1.5*iqr)
 
@@ -97,10 +118,19 @@ crime_df %>%
 
 ### Verify the association between hate crime rate and income inequality
 
+```{r cor matrix}
+crime_df %>% dplyr::select(-state,-unemployment,-urbanization) %>% cor() %>% knitr::kable(digits = 2)
+
+crime_df %>% dplyr::select(-state,-unemployment,-urbanization) %>% cor() %>% corrplot::corrplot(method = "circle", type = "upper", diag=FALSE)
+
+# Non citizen and non white are highly correlated (0.75). Only select non_citizen for model.
+
+```
+
 ```{r}
 
 reg_crimes = 
-  lm(hate_crimes_per_100k_splc ~ factor(unemployment) + factor(urbanization) + median_household_income + perc_population_with_high_school_degree + perc_non_citizen + gini_index + perc_non_white, data = crime_df)
+  lm(hate_crimes_per_100k_splc ~ factor(unemployment) + factor(urbanization) + median_household_income +  perc_non_citizen + gini_index, data = crime_df)
 
 summary(reg_crimes)
 
@@ -113,7 +143,7 @@ vif(reg_crimes)
 ```{r partial f test}
 
 # H0: small model is better
-reduced_model = lm(hate_crimes_per_100k_splc ~ factor(unemployment) + factor(urbanization) + median_household_income + perc_population_with_high_school_degree + perc_non_citizen + perc_non_white, data = crime_df)
+reduced_model = lm(hate_crimes_per_100k_splc ~ factor(unemployment) + factor(urbanization) + median_household_income +  perc_non_citizen, data = crime_df)
 
 summary(reduced_model)
 
@@ -123,40 +153,32 @@ anova(reduced_model, reg_crimes)
 
 
 ### MLR
-```{r cor matrix}
-crime_df %>% dplyr::select(-state,-unemployment,-urbanization) %>% cor() %>% knitr::kable(digits = 2)
-
-crime_df %>% dplyr::select(-state,-unemployment,-urbanization) %>% cor() %>% corrplot::corrplot(method = "circle", type = "upper", diag=FALSE)
-```
-
 
 ```{r interaction}
-qplot(x = median_household_income, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization))+geom_smooth(method = "lm", se = FALSE)
+income_urban <- qplot(x = median_household_income, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization))+geom_smooth(method = "lm", se = FALSE)
 
-qplot(x = median_household_income, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment))+geom_smooth(method = "lm", se = FALSE)
-
-
-qplot(x = perc_population_with_high_school_degree, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization))+geom_smooth(method = "lm", se = FALSE)
-
-qplot(x = perc_population_with_high_school_degree, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment))+geom_smooth(method = "lm", se = FALSE)
+income_unemploy <- qplot(x = median_household_income, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment))+geom_smooth(method = "lm", se = FALSE)
 
 
-qplot(x = perc_non_citizen, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization))+geom_smooth(method = "lm", se = FALSE)
+highschool_urban <- qplot(x = perc_population_with_high_school_degree, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization))+geom_smooth(method = "lm", se = FALSE)
+
+highschool_unemploy <- qplot(x = perc_population_with_high_school_degree, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment))+geom_smooth(method = "lm", se = FALSE)
 
 
-qplot(x = perc_non_citizen, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment))+geom_smooth(method = "lm", se = FALSE)
+noncitizen_urban <- qplot(x = perc_non_citizen, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization))+geom_smooth(method = "lm", se = FALSE)
 
 
-qplot(x = gini_index, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization))+geom_smooth(method = "lm", se = FALSE)
-
-qplot(x = gini_index, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment))+geom_smooth(method = "lm", se = FALSE)
+noncitizen_unemploy <- qplot(x = perc_non_citizen, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment))+geom_smooth(method = "lm", se = FALSE)
 
 
-qplot(x = perc_non_white, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization))+geom_smooth(method = "lm", se = FALSE)
+gini_urban <- qplot(x = gini_index, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization))+geom_smooth(method = "lm", se = FALSE)
 
-qplot(x = perc_non_white, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment))+geom_smooth(method = "lm", se = FALSE)
+gini_unemploy <- qplot(x = gini_index, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment))+geom_smooth(method = "lm", se = FALSE)
 
-
+income_urban+income_unemploy
+highschool_urban+highschool_unemploy
+noncitizen_urban+noncitizen_unemploy
+gini_urban+gini_unemploy
 
 ```
 
@@ -165,7 +187,7 @@ qplot(x = perc_non_white, y = hate_crimes_per_100k_splc, data = crime_df, color 
 
 ```{r}
 
-int_model <- lm(hate_crimes_per_100k_splc ~  median_household_income + perc_population_with_high_school_degree + perc_non_citizen + gini_index + perc_non_white + median_household_income * urbanization + median_household_income * unemployment + perc_population_with_high_school_degree * urbanization + perc_population_with_high_school_degree * unemployment + perc_non_citizen * urbanization + gini_index * urbanization + perc_non_white * urbanization,data = crime_df)
+int_model <- lm(hate_crimes_per_100k_splc ~  median_household_income + perc_population_with_high_school_degree + perc_non_citizen + gini_index + median_household_income * urbanization + median_household_income * unemployment + perc_population_with_high_school_degree * urbanization + perc_population_with_high_school_degree * unemployment + perc_non_citizen * urbanization + gini_index * urbanization,data = crime_df)
 
 
 step(int_model, direction='backward')
@@ -175,13 +197,6 @@ new_reg = lm(hate_crimes_per_100k_splc ~ perc_population_with_high_school_degree
 
 summary(new_reg)
 ```
-
-### Check Assumptions
-```{r}
-vif(reg_crimes)  # <5
-
-```
-
 
 
 ## Dignositics
