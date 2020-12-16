@@ -130,7 +130,7 @@ crime_df %>% dplyr::select(-state,-unemployment,-urbanization) %>% cor() %>% cor
 ```{r}
 
 reg_crimes = 
-  lm(hate_crimes_per_100k_splc ~ factor(unemployment) + factor(urbanization) + median_household_income +  perc_non_citizen + gini_index, data = crime_df)
+  lm(hate_crimes_per_100k_splc ~ factor(unemployment) + factor(urbanization) + perc_population_with_high_school_degree + median_household_income +  perc_non_citizen + gini_index, data = crime_df)
 
 summary(reg_crimes)
 
@@ -143,7 +143,7 @@ vif(reg_crimes)
 ```{r partial f test}
 
 # H0: small model is better
-reduced_model = lm(hate_crimes_per_100k_splc ~ factor(unemployment) + factor(urbanization) + median_household_income +  perc_non_citizen, data = crime_df)
+reduced_model = lm(hate_crimes_per_100k_splc ~ factor(unemployment) + factor(urbanization) + perc_population_with_high_school_degree + median_household_income +  perc_non_citizen, data = crime_df)
 
 summary(reduced_model)
 
