@@ -74,7 +74,8 @@ hist_before <- crime_df %>%
   geom_density(color = "yellow") +
   labs(
     title = "Before Log" ,
-    x = "hate crime per 100,000 population"
+    x = "Hate Crime per 100K Population",
+    y = "Density"
   )
 
 # qqplot - distribution of outcome
@@ -83,7 +84,9 @@ qq_before <- crime_df %>%
   stat_qq() + 
   stat_qq_line() +
   labs(
-    title = "Before Log"
+    title = "Before Log",
+    x = "Theoretical",
+    y = "Sample"
   )
 
 
@@ -96,7 +99,8 @@ hist_after<- crime_df %>%
   geom_density(color = "yellow") +
   labs(
     title = "After Log" ,
-    x = "hate crime per 100,000 population"
+    x = "Hate Crime per 100K Population",
+    y = "Density"
   )
 
 qq_after <- crime_df %>% 
@@ -104,7 +108,9 @@ qq_after <- crime_df %>%
   stat_qq() + 
   stat_qq_line() +
   labs(
-    title = "After Log"
+    title = "After Log",
+    x = "Theoretical",
+    y = "Sample"
   )
 
 hist_before+qq_before
@@ -156,39 +162,39 @@ anova(reduced_model, reg_crimes)
 
 ```{r interaction}
 income_urban <- qplot(x = median_household_income, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization)) + geom_smooth(method = "lm", se = FALSE) + 
-  labs(x = "Median Household Income", y = "Hate Crime Rate Per 100k Population") +
+  labs(x = "Median Household Income", y = "Hate Crime Rate per 100K Population") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 income_unemploy <- qplot(x = median_household_income, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment)) + geom_smooth(method = "lm", se = FALSE) +
-  labs(x = "Median Household Income", y = "Hate Crime Rate Per 100k Population") +
+  labs(x = "Median Household Income", y = "Hate Crime Rate per 100K Population") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 
 highschool_urban <- qplot(x = perc_population_with_high_school_degree, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization)) + geom_smooth(method = "lm", se = FALSE) + 
-  labs(x = "Percentage Of Population With High School Degree", y = "Hate Crime Rate Per 100k Population") +
+  labs(x = "Percentage Of Population With High School Degree", y = "Hate Crime Rate per 100K Population") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 highschool_unemploy <- qplot(x = perc_population_with_high_school_degree, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment)) + geom_smooth(method = "lm", se = FALSE) + 
-  labs(x = "Percentage Of Population With High School Degree", y = "Hate Crime Rate Per 100k Population") +
+  labs(x = "Percentage Of Population With High School Degree", y = "Hate Crime Rate per 100K Population") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 
 noncitizen_urban <- qplot(x = perc_non_citizen, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization)) + geom_smooth(method = "lm", se = FALSE) + 
-  labs(x = "Percentage Of Non-citizen", y = "Hate Crime Rate Per 100k Population") +
+  labs(x = "Percentage Of Non-citizen", y = "Hate Crime Rate per 100K Population") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 
 noncitizen_unemploy <- qplot(x = perc_non_citizen, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment)) + geom_smooth(method = "lm", se = FALSE) + 
-  labs(x = "Percentage Of Non-citizen", y = "Hate Crime Rate Per 100k Population") +
+  labs(x = "Percentage Of Non-citizen", y = "Hate Crime Rate per 100K Population") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 
 gini_urban <- qplot(x = gini_index, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(urbanization)) + geom_smooth(method = "lm", se = FALSE) + 
-  labs(x = "Gini Index", y = "Hate Crime Rate Per 100k Population") +
+  labs(x = "Gini Index", y = "Hate Crime Rate per 100K Population") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 gini_unemploy <- qplot(x = gini_index, y = hate_crimes_per_100k_splc, data = crime_df, color =factor(unemployment)) + geom_smooth(method = "lm", se = FALSE) + 
-  labs(x = "Gini Index", y = "Hate Crime Rate Per 100k Population") +
+  labs(x = "Gini Index", y = "Hate Crime Rate per 100K Population") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 income_urban+income_unemploy
